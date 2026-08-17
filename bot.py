@@ -50,14 +50,15 @@ def send_telegram_message(text: str, reply_markup: dict = None, disable_notifica
         print(f"Исключение при отправке в Telegram: {e}")
     return {}
 
-def edit_telegram_message(message_id: int, text: str, reply_markup: dict = None) -> bool:
-    token, chat_id = get_bot_credentials()
-    if not token or not chat_id or not message_id:
+def edit_telegram_message(message_id: int, text: str, reply_markup: dict = None, chat_id: str = None) -> bool:
+    token, default_chat_id = get_bot_credentials()
+    target_chat = str(chat_id) if chat_id else default_chat_id
+    if not token or not target_chat or not message_id:
         return False
         
     url = f"https://api.telegram.org/bot{token}/editMessageText"
     payload = {
-        "chat_id": chat_id,
+        "chat_id": target_chat,
         "message_id": message_id,
         "text": text,
         "parse_mode": "HTML",
@@ -68,8 +69,11 @@ def edit_telegram_message(message_id: int, text: str, reply_markup: dict = None)
         
     try:
         response = HTTP_SESSION.post(url, json=payload, timeout=5)
+        if response.status_code != 200:
+            send_telegram_message(text, reply_markup=reply_markup, chat_id=target_chat)
         return response.status_code == 200
     except Exception:
+        send_telegram_message(text, reply_markup=reply_markup, chat_id=target_chat)
         return False
 
 def edit_telegram_reply_markup(message_id: int, reply_markup: dict) -> bool:

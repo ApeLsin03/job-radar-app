@@ -226,7 +226,7 @@ def get_main_menu_data():
 def send_main_menu(message_id: int = None, chat_id: str = None):
     text, markup = get_main_menu_data()
     if message_id:
-        edit_telegram_message(message_id, text, markup)
+        edit_telegram_message(message_id, text, markup, chat_id=chat_id)
     else:
         send_telegram_message(text, reply_markup=markup, chat_id=chat_id)
 
@@ -512,12 +512,14 @@ def telegram_polling_worker():
                         # --- САЙТ-ПОРТФОЛИО ---
                         elif data_val == 'menu_portfolio':
                             ans()
-                            send_portfolio_builder_message(message_id=msg_id)
+                            cb_chat_id = msg.get('chat', {}).get('id')
+                            send_portfolio_builder_message(message_id=msg_id, chat_id=cb_chat_id)
                             
                         # --- ГЛАВНОЕ МЕНЮ ---
                         elif data_val == 'menu_main':
                             ans()
-                            send_main_menu(message_id=msg_id)
+                            cb_chat_id = msg.get('chat', {}).get('id')
+                            send_main_menu(message_id=msg_id, chat_id=cb_chat_id)
                             
                     # 2. Обработка текстовых команд
                     elif 'message' in update:
