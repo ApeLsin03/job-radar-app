@@ -281,6 +281,7 @@ def telegram_polling_worker():
                         data_val = cb.get('data', '')
                         msg = cb.get('message', {})
                         msg_id = msg.get('message_id')
+                        cb_chat_id = msg.get('chat', {}).get('id')
                         
                         def ans(text=""):
                             try:
@@ -291,7 +292,7 @@ def telegram_polling_worker():
                         # --- ПОИСК ---
                         if data_val == 'fetch_more':
                             ans("Ищу следующие 10 вакансий...")
-                            send_telegram_message("⏳ <b>Ищу следующую порцию из 10 свежих вакансий...</b>")
+                            send_telegram_message("⏳ <b>Ищу следующую порцию из 10 свежих вакансий...</b>", chat_id=cb_chat_id)
                             threading.Thread(target=run_single_scan, args=(BATCH_LIMIT, True), daemon=True).start()
                             
                         # --- EXCEL ---
@@ -309,7 +310,6 @@ def telegram_polling_worker():
                             vac = get_vacancy_by_id(vac_id)
                             cur_st = vac.get('status', 'Не откликался') if vac else 'Не откликался'
                             ans()
-                            # Открываем выбор статуса
                             markup = {
                                 "inline_keyboard": [
                                     [
@@ -327,7 +327,7 @@ def telegram_polling_worker():
                                     [{"text": "◀️ Назад к карточке", "callback_data": f"restore_card_{vac_id}"}]
                                 ]
                             }
-                            edit_telegram_reply_markup(msg_id, markup)
+                            edit_telegram_reply_markup(msg_id, markup, chat_id=cb_chat_id)
                             
                         elif data_val.startswith('setstat_'):
                             parts = data_val.split('_')
@@ -360,7 +360,6 @@ def telegram_polling_worker():
                                 comp_name = vac.get('company')
                                 add_blacklisted_company(comp_name)
                                 ans(f"🚫 {comp_name[:20]} в черном списке!")
-                                # Обновляем кнопку на карточке
                                 try:
                                     orig_markup = msg.get('reply_markup', {}).get('inline_keyboard', [])
                                     if orig_markup and len(orig_markup) >= 2:
@@ -372,7 +371,7 @@ def telegram_polling_worker():
                                                 [btn_status, {"text": "🚫 Скрыто", "callback_data": "already_bl"}]
                                             ]
                                         }
-                                        edit_telegram_reply_markup(msg_id, new_markup)
+                                        edit_telegram_reply_markup(msg_id, new_markup, chat_id=cb_chat_id)
                                 except Exception:
                                     pass
                             else:
@@ -416,7 +415,7 @@ def telegram_polling_worker():
                                                 row2
                                             ]
                                         }
-                                        edit_telegram_reply_markup(msg_id, new_markup)
+                                        edit_telegram_reply_markup(msg_id, new_markup, chat_id=cb_chat_id)
                                 except Exception:
                                     pass
                                     
@@ -427,45 +426,45 @@ def telegram_polling_worker():
                             vac_id = data_val.replace('del_fav_', '')
                             remove_favorite_by_id(vac_id)
                             ans("❌ Удалено")
-                            send_favorites_list(get_favorites(), message_id=msg_id)
+                            send_favorites_list(get_favorites(), message_id=msg_id, chat_id=cb_chat_id)
                             
                         elif data_val == 'view_favorites':
                             ans()
-                            send_favorites_list(get_favorites(), message_id=msg_id)
+                            send_favorites_list(get_favorites(), message_id=msg_id, chat_id=cb_chat_id)
                             
                         # --- МЕНЮ СТЕКА ---
                         elif data_val == 'menu_filters':
                             ans()
-                            send_filters_menu(get_user_filter(), message_id=msg_id)
+                            send_filters_menu(get_user_filter(), message_id=msg_id, chat_id=cb_chat_id)
                             
                         elif data_val.startswith('set_filter_'):
                             new_filter = data_val.replace('set_filter_', '')
                             set_user_filter(new_filter)
                             ans("Стек обновлен")
-                            send_filters_menu(new_filter, message_id=msg_id)
+                            send_filters_menu(new_filter, message_id=msg_id, chat_id=cb_chat_id)
                             
                         # --- МЕНЮ ЗАРПЛАТЫ ---
                         elif data_val == 'menu_salary':
                             ans()
-                            send_salary_menu(get_salary_filter(), message_id=msg_id)
+                            send_salary_menu(get_salary_filter(), message_id=msg_id, chat_id=cb_chat_id)
                             
                         elif data_val.startswith('set_sal_'):
                             new_sal = data_val.replace('set_sal_', '')
                             set_salary_filter(new_sal)
                             ans("Зарплата обновлена")
-                            send_salary_menu(new_sal, message_id=msg_id)
+                            send_salary_menu(new_sal, message_id=msg_id, chat_id=cb_chat_id)
                             
                         # --- МЕНЮ ИНТЕРВАЛА ВРЕМЕНИ ---
                         elif data_val == 'menu_interval':
                             ans()
-                            send_interval_menu(get_interval_minutes(), message_id=msg_id)
+                            send_interval_menu(get_interval_minutes(), message_id=msg_id, chat_id=cb_chat_id)
                             
                         elif data_val.startswith('set_interval_'):
                             try:
                                 m = int(data_val.replace('set_interval_', ''))
                                 set_interval_minutes(m)
                                 ans(f"Интервал: {format_interval_text(m)}")
-                                send_interval_menu(m, message_id=msg_id)
+                                send_interval_menu(m, message_id=msg_id, chat_id=cb_chat_id)
                             except Exception:
                                 pass
                             
@@ -476,7 +475,8 @@ def telegram_polling_worker():
                                 get_setting('night_mode', 'on'),
                                 get_setting('daily_digest', 'on'),
                                 get_interval_minutes(),
-                                message_id=msg_id
+                                message_id=msg_id,
+                                chat_id=cb_chat_id
                             )
                             
                         elif data_val == 'toggle_night_mode':
@@ -484,14 +484,14 @@ def telegram_polling_worker():
                             new_val = 'off' if cur == 'on' else 'on'
                             set_setting('night_mode', new_val)
                             ans(f"Ночной режим: {'ВКЛ' if new_val == 'on' else 'ВЫКЛ'}")
-                            send_modes_menu(new_val, get_setting('daily_digest', 'on'), get_interval_minutes(), message_id=msg_id)
+                            send_modes_menu(new_val, get_setting('daily_digest', 'on'), get_interval_minutes(), message_id=msg_id, chat_id=cb_chat_id)
                             
                         elif data_val == 'toggle_daily_digest':
                             cur = get_setting('daily_digest', 'on')
                             new_val = 'off' if cur == 'on' else 'on'
                             set_setting('daily_digest', new_val)
                             ans(f"Дайджест: {'ВКЛ' if new_val == 'on' else 'ВЫКЛ'}")
-                            send_modes_menu(get_setting('night_mode', 'on'), new_val, get_interval_minutes(), message_id=msg_id)
+                            send_modes_menu(get_setting('night_mode', 'on'), new_val, get_interval_minutes(), message_id=msg_id, chat_id=cb_chat_id)
                             
                         elif data_val == 'send_digest_now':
                             ans("Отправляю дайджест...")
@@ -502,23 +502,21 @@ def telegram_polling_worker():
                         # --- MINI APP ---
                         elif data_val == 'menu_mini_app':
                             ans()
-                            send_mini_app_message(message_id=msg_id)
+                            send_mini_app_message(message_id=msg_id, chat_id=cb_chat_id)
                             
                         # --- АНАЛИТИКА РЫНКА ---
                         elif data_val == 'menu_market':
                             ans()
-                            send_market_analytics_message(message_id=msg_id)
+                            send_market_analytics_message(message_id=msg_id, chat_id=cb_chat_id)
                             
                         # --- САЙТ-ПОРТФОЛИО ---
                         elif data_val == 'menu_portfolio':
                             ans()
-                            cb_chat_id = msg.get('chat', {}).get('id')
                             send_portfolio_builder_message(message_id=msg_id, chat_id=cb_chat_id)
                             
                         # --- ГЛАВНОЕ МЕНЮ ---
                         elif data_val == 'menu_main':
                             ans()
-                            cb_chat_id = msg.get('chat', {}).get('id')
                             send_main_menu(message_id=msg_id, chat_id=cb_chat_id)
                             
                     # 2. Обработка текстовых команд

@@ -38,7 +38,7 @@ def send_telegram_message(text: str, reply_markup: dict = None, disable_notifica
         "disable_notification": disable_notification
     }
     if reply_markup:
-        payload["reply_markup"] = json.dumps(reply_markup)
+        payload["reply_markup"] = reply_markup
         
     try:
         response = HTTP_SESSION.post(url, json=payload, timeout=8)
@@ -65,7 +65,7 @@ def edit_telegram_message(message_id: int, text: str, reply_markup: dict = None,
         "disable_web_page_preview": False
     }
     if reply_markup:
-        payload["reply_markup"] = json.dumps(reply_markup)
+        payload["reply_markup"] = reply_markup
         
     try:
         response = HTTP_SESSION.post(url, json=payload, timeout=5)
@@ -76,16 +76,17 @@ def edit_telegram_message(message_id: int, text: str, reply_markup: dict = None,
         send_telegram_message(text, reply_markup=reply_markup, chat_id=target_chat)
         return False
 
-def edit_telegram_reply_markup(message_id: int, reply_markup: dict) -> bool:
-    token, chat_id = get_bot_credentials()
-    if not token or not chat_id or not message_id:
+def edit_telegram_reply_markup(message_id: int, reply_markup: dict, chat_id: str = None) -> bool:
+    token, default_chat_id = get_bot_credentials()
+    target_chat = str(chat_id) if chat_id else default_chat_id
+    if not token or not target_chat or not message_id:
         return False
         
     url = f"https://api.telegram.org/bot{token}/editMessageReplyMarkup"
     payload = {
-        "chat_id": chat_id,
+        "chat_id": target_chat,
         "message_id": message_id,
-        "reply_markup": json.dumps(reply_markup)
+        "reply_markup": reply_markup
     }
     try:
         response = HTTP_SESSION.post(url, json=payload, timeout=5)
@@ -260,11 +261,11 @@ def send_mini_app_message(message_id: int = None, chat_id: str = None):
         ]
     }
     if message_id:
-        edit_telegram_message(message_id, text, markup)
+        edit_telegram_message(message_id, text, markup, chat_id=chat_id)
     else:
         send_telegram_message(text, reply_markup=markup, chat_id=chat_id)
 
-def send_portfolio_builder_message(message_id: int = None):
+def send_portfolio_builder_message(message_id: int = None, chat_id: str = None):
     text = """🎨 <b>КОНСТРУКТОР САЙТА-ПОРТФОЛИО И РЕЗЮМЕ</b>
 
 Готовый личный сайт с вашими работами и проектами повышает шансы на приглашение на собеседование в <b>3–5 раз</b>!
@@ -290,11 +291,11 @@ def send_portfolio_builder_message(message_id: int = None):
         ]
     }
     if message_id:
-        edit_telegram_message(message_id, text, markup)
+        edit_telegram_message(message_id, text, markup, chat_id=chat_id)
     else:
-        send_telegram_message(text, reply_markup=markup)
+        send_telegram_message(text, reply_markup=markup, chat_id=chat_id)
 
-def send_market_analytics_message(message_id: int = None):
+def send_market_analytics_message(message_id: int = None, chat_id: str = None):
     from market_analytics import format_market_report
     text = format_market_report()
     markup = {
@@ -311,9 +312,9 @@ def send_market_analytics_message(message_id: int = None):
         ]
     }
     if message_id:
-        edit_telegram_message(message_id, text, markup)
+        edit_telegram_message(message_id, text, markup, chat_id=chat_id)
     else:
-        send_telegram_message(text, reply_markup=markup)
+        send_telegram_message(text, reply_markup=markup, chat_id=chat_id)
 
 # ==================== МЕНЮ СТАТУСОВ ОТКЛИКА ====================
 
@@ -443,12 +444,12 @@ def get_filters_menu_data(current_filter: str = "all"):
     }
     return text, markup
 
-def send_filters_menu(current_filter: str = "all", message_id: int = None):
+def send_filters_menu(current_filter: str = "all", message_id: int = None, chat_id: str = None):
     text, markup = get_filters_menu_data(current_filter)
     if message_id:
-        edit_telegram_message(message_id, text, markup)
+        edit_telegram_message(message_id, text, markup, chat_id=chat_id)
     else:
-        send_telegram_message(text, reply_markup=markup)
+        send_telegram_message(text, reply_markup=markup, chat_id=chat_id)
 
 def get_salary_menu_data(current_salary: str = "salary_any"):
     text = (
@@ -470,12 +471,12 @@ def get_salary_menu_data(current_salary: str = "salary_any"):
     }
     return text, markup
 
-def send_salary_menu(current_salary: str = "salary_any", message_id: int = None):
+def send_salary_menu(current_salary: str = "salary_any", message_id: int = None, chat_id: str = None):
     text, markup = get_salary_menu_data(current_salary)
     if message_id:
-        edit_telegram_message(message_id, text, markup)
+        edit_telegram_message(message_id, text, markup, chat_id=chat_id)
     else:
-        send_telegram_message(text, reply_markup=markup)
+        send_telegram_message(text, reply_markup=markup, chat_id=chat_id)
 
 def format_interval_text(minutes: int) -> str:
     mapping = {
@@ -518,12 +519,12 @@ def get_interval_menu_data(current_minutes: int = 30):
     keyboard.append([{"text": "🏠 Главное меню", "callback_data": "menu_main"}])
     return text, {"inline_keyboard": keyboard}
 
-def send_interval_menu(current_minutes: int = 30, message_id: int = None):
+def send_interval_menu(current_minutes: int = 30, message_id: int = None, chat_id: str = None):
     text, markup = get_interval_menu_data(current_minutes)
     if message_id:
-        edit_telegram_message(message_id, text, markup)
+        edit_telegram_message(message_id, text, markup, chat_id=chat_id)
     else:
-        send_telegram_message(text, reply_markup=markup)
+        send_telegram_message(text, reply_markup=markup, chat_id=chat_id)
 
 def get_modes_menu_data(night_mode: str = "on", daily_digest: str = "on", current_minutes: int = 30):
     night_status = "ВКЛЮЧЕН (23:00–09:00 без звука) 🌙" if night_mode == "on" else "ВЫКЛЮЧЕН (уведомления всегда) 🔔"
@@ -556,12 +557,12 @@ def get_modes_menu_data(night_mode: str = "on", daily_digest: str = "on", curren
     }
     return text, markup
 
-def send_modes_menu(night_mode: str = "on", daily_digest: str = "on", current_minutes: int = 30, message_id: int = None):
+def send_modes_menu(night_mode: str = "on", daily_digest: str = "on", current_minutes: int = 30, message_id: int = None, chat_id: str = None):
     text, markup = get_modes_menu_data(night_mode, daily_digest, current_minutes)
     if message_id:
-        edit_telegram_message(message_id, text, markup)
+        edit_telegram_message(message_id, text, markup, chat_id=chat_id)
     else:
-        send_telegram_message(text, reply_markup=markup)
+        send_telegram_message(text, reply_markup=markup, chat_id=chat_id)
 
 def send_evening_digest_message(stats: dict, top_vacancies: list):
     date_str = datetime.now().strftime("%d.%m.%Y")
