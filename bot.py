@@ -214,7 +214,7 @@ def send_batch_footer(sent_count: int, active_filter: str = "all", active_salary
     }
     send_telegram_message(text, reply_markup=markup)
 
-MINI_APP_HTTPS_URL = "https://possession-functioning-warcraft-met.trycloudflare.com"
+MINI_APP_HTTPS_URL = os.getenv('RENDER_EXTERNAL_URL', 'https://job-radar-app.onrender.com')
 
 def setup_telegram_menu_button():
     """Устанавливает нативную кнопку в левом нижнем углу чата Telegram для открытия Mini App в 1 тап."""

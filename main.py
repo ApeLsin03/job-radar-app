@@ -526,7 +526,7 @@ def telegram_polling_worker():
                         user_chat_id = msg.get('chat', {}).get('id')
                         print(f"📥 Получено сообщение в Telegram: '{text}' (chat_id: {user_chat_id})")
                         
-                        if text in ['/start', '/help', 'меню', 'старт', 'привет', 'главная']:
+                        if text in ['/start', '/help', '/menu', 'menu', 'меню', 'старт', 'привет', 'главная']:
                             send_main_menu(chat_id=user_chat_id)
                             
                         elif text in ['/app', '/tinder', 'приложение', 'свайпы', 'tma', 'миниапп']:
