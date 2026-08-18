@@ -35,11 +35,13 @@ from bot import (
     send_market_analytics_message, send_portfolio_builder_message,
     send_mini_app_message,
     edit_telegram_message, edit_telegram_reply_markup,
-    get_bot_credentials, HTTP_SESSION
+    get_bot_credentials, HTTP_SESSION, MINI_APP_HTTPS_URL
 )
 from export_excel import create_excel_export
 
 load_dotenv()
+
+MINI_APP_HTTPS_URL = os.getenv('RENDER_EXTERNAL_URL', 'https://job-radar-app.onrender.com')
 
 SCAN_LOCK = threading.Lock()
 BATCH_LIMIT = 10
