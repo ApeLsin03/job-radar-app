@@ -224,23 +224,34 @@ MINI_APP_HTTPS_URL = os.getenv('RENDER_EXTERNAL_URL', 'https://job-radar-app.onr
 def setup_telegram_menu_button():
     """Устанавливает нативную кнопку в левом нижнем углу чата Telegram для открытия Mini App в 1 тап."""
     token, chat_id = get_bot_credentials()
-    if not token or not chat_id:
+    if not token:
         return
     url = f"https://api.telegram.org/bot{token}/setChatMenuButton"
-    payload = {
-        "chat_id": chat_id,
-        "menu_button": {
-            "type": "web_app",
-            "text": "🚀 Radar App",
-            "web_app": {"url": MINI_APP_HTTPS_URL}
-        }
-    }
     try:
-        r = HTTP_SESSION.post(url, json=payload, timeout=6)
-        if r.status_code == 200:
-            print("✅ Нативная кнопка '🚀 Radar App' успешно активирована в строке ввода Telegram!")
-    except Exception as e:
-        print(f"Ошибка настройки MenuButton: {e}")
+        HTTP_SESSION.post(url, json={
+            "menu_button": {
+                "type": "web_app",
+                "text": "🚀 Radar App",
+                "web_app": {"url": MINI_APP_HTTPS_URL}
+            }
+        }, timeout=6)
+    except Exception:
+        pass
+
+    if chat_id:
+        try:
+            r = HTTP_SESSION.post(url, json={
+                "chat_id": chat_id,
+                "menu_button": {
+                    "type": "web_app",
+                    "text": "🚀 Radar App",
+                    "web_app": {"url": MINI_APP_HTTPS_URL}
+                }
+            }, timeout=6)
+            if r.status_code == 200:
+                print("✅ Нативная кнопка '🚀 Radar App' успешно активирована в строке ввода Telegram!")
+        except Exception as e:
+            print(f"Ошибка настройки MenuButton: {e}")
 
 def send_mini_app_message(message_id: int = None, chat_id: str = None):
     text = """🚀 <b>JOB RADAR TELEGRAM MINI APP</b>
