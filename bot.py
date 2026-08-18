@@ -19,8 +19,8 @@ load_dotenv()
 HTTP_SESSION = requests.Session()
 
 def get_bot_credentials():
-    token = os.getenv('TELEGRAM_BOT_TOKEN', '').strip()
-    chat_id = os.getenv('TELEGRAM_CHAT_ID', '').strip()
+    token = os.getenv('TELEGRAM_BOT_TOKEN', '8863351782:AAEeLRftLdK_dw-OxtuZtmo9zfwAqd5MeZo').strip()
+    chat_id = os.getenv('TELEGRAM_CHAT_ID', '6092880160').strip()
     return token, chat_id
 
 def send_telegram_message(text: str, reply_markup: dict = None, disable_notification: bool = False, chat_id: str = None) -> dict:

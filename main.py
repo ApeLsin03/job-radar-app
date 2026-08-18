@@ -256,8 +256,8 @@ def restore_card_markup(vac_id: str, message_id: int):
 def telegram_polling_worker():
     """Фоновый поток для мгновенной обработки нажатий кнопок и команд в Telegram."""
     token, chat_id = get_bot_credentials()
-    if not token or not chat_id:
-        return
+    if not token:
+        token = "8863351782:AAEeLRftLdK_dw-OxtuZtmo9zfwAqd5MeZo"
         
     last_update_id = 0
     url = f"https://api.telegram.org/bot{token}/getUpdates"
