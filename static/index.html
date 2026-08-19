@@ -44,6 +44,23 @@
                     <span class="feed-pill" id="swipe-source-tag">HH & Хабр Карьера</span>
                 </div>
 
+                <!-- Быстрые фильтры по Стеку и Зарплате -->
+                <div class="filter-pills-scroll">
+                    <div class="pill-group">
+                        <button class="filter-pill active" data-filter-type="stack" data-val="all" onclick="setFilter('stack', 'all')">🌐 Все</button>
+                        <button class="filter-pill" data-filter-type="stack" data-val="frontend" onclick="setFilter('stack', 'frontend')">💻 Frontend</button>
+                        <button class="filter-pill" data-filter-type="stack" data-val="python" onclick="setFilter('stack', 'python')">🐍 Python</button>
+                        <button class="filter-pill" data-filter-type="stack" data-val="qa" onclick="setFilter('stack', 'qa')">🧪 QA</button>
+                    </div>
+                    <div class="pill-divider"></div>
+                    <div class="pill-group">
+                        <button class="filter-pill active" data-filter-type="salary" data-val="salary_any" onclick="setFilter('salary', 'salary_any')">💵 Любая З/П</button>
+                        <button class="filter-pill" data-filter-type="salary" data-val="salary_specified" onclick="setFilter('salary', 'salary_specified')">💰 С суммой</button>
+                        <button class="filter-pill" data-filter-type="salary" data-val="salary_40k" onclick="setFilter('salary', 'salary_40k')">💎 40k+ ₽</button>
+                        <button class="filter-pill" data-filter-type="salary" data-val="salary_60k" onclick="setFilter('salary', 'salary_60k')">🚀 60k+ ₽</button>
+                    </div>
+                </div>
+
                 <div class="card-stack-viewport" id="card-stack-viewport">
                     <div class="card-stack" id="card-stack">
                         <!-- Заглушка, когда все вакансии просмотрены -->

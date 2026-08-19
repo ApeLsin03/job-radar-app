@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎨 Portfolio & CV Builder — Конструктор сайта-портфолио</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Библиотека генерации ZIP прямо в браузере -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+<body>
+    <!-- Верхняя панель управления (Top Bar) -->
+    <header class="topbar">
+        <div class="topbar-left">
+            <div class="app-logo">
+                <span class="app-logo-icon">🎨</span>
+                <div>
+                    <h1 class="app-title">Portfolio & CV Builder</h1>
+                    <span class="app-badge">Live Конструктор</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="topbar-actions">
+            <button class="btn btn-ai" id="btn-ai-modal" title="Сгенерировать продающее описание через ИИ">
+                <span>🤖 ИИ-Ассистент (Gemini)</span>
+            </button>
+            <button class="btn btn-secondary btn-sm" id="btn-deploy-guide" title="Инструкция по бесплатному деплою">
+                <span>🚀 Деплой на GitHub Pages</span>
+            </button>
+            <button class="btn btn-primary btn-sm" id="btn-download-zip" title="Скачать готовые файлы сайта">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                <span>Скачать ZIP-архив</span>
+            </button>
+            <button class="btn btn-secondary btn-sm" id="btn-send-tg" title="Отправить ссылку в Telegram-бот Job Radar">
+                <span>✈️ В Telegram</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Сплит-экран (Split Layout) -->
+    <main class="builder-container">
+        <!-- Левая панель: Форма редактирования -->
+        <aside class="editor-panel">
+            <!-- Навигация по вкладкам -->
+            <div class="editor-tabs">
+                <button class="tab-btn active" data-tab="tab-about">
+                    <span>👤</span> Обо мне
+                </button>
+                <button class="tab-btn" data-tab="tab-skills">
+                    <span>🛠️</span> Стек и навыки
+                </button>
+                <button class="tab-btn" data-tab="tab-projects">
+                    <span>💻</span> Проекты
+                </button>
+                <button class="tab-btn" data-tab="tab-experience">
+                    <span>🎓</span> Опыт & Учеба
+                </button>
+                <button class="tab-btn" data-tab="tab-contacts">
+                    <span>📬</span> Контакты
+                </button>
+            </div>
+
+            <!-- Содержимое вкладок -->
+            <div class="editor-content">
+                <!-- Вкладка 1: Обо мне -->
+                <section class="tab-pane active" id="tab-about">
+                    <div class="form-section-header">
+                        <h2>Основная информация</h2>
+                        <p>Ваше позиционирование, должность и приветственный текст</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-name">Ваше имя и фамилия</label>
+                        <input type="text" id="input-name" class="form-control" placeholder="Иван Иванов" value="Иван Иванов">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-role">Желаемая должность / Роль</label>
+                        <input type="text" id="input-role" class="form-control" placeholder="Junior Frontend-разработчик / Верстальщик" value="Junior Frontend-разработчик / Верстальщик">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-status">Статус доступности (Бейдж)</label>
+                        <input type="text" id="input-status" class="form-control" placeholder="🟢 Открыт к предложениям и стажировкам" value="🟢 Открыт к предложениям и стажировкам">
+                    </div>
+
+                    <div class="form-group">
+                        <div class="label-with-action">
+                            <label for="input-bio">Обо мне (Краткое сильное описание)</label>
+                            <button type="button" class="btn-text-action" id="btn-quick-ai-bio">✨ Улучшить через ИИ</button>
+                        </div>
+                        <textarea id="input-bio" class="form-control" rows="5" placeholder="Расскажите о ваших ключевых навыках, чем вы полезны компании и готовности обучаться..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-resume-url">Ссылка на файл резюме (Google Drive / Яндекс.Диск / hh.ru)</label>
+                        <input type="url" id="input-resume-url" class="form-control" placeholder="https://..." value="#">
+                    </div>
+                </section>
+
+                <!-- Вкладка 2: Навыки -->
+                <section class="tab-pane" id="tab-skills">
+                    <div class="form-section-header">
+                        <div class="flex-between">
+                            <div>
+                                <h2>Стек технологий</h2>
+                                <p>Добавьте технологии, которыми владеете</p>
+                            </div>
+                            <button type="button" class="btn btn-outline btn-sm" id="btn-add-skill">+ Добавить навык</button>
+                        </div>
+                    </div>
+
+                    <div class="preset-skills-box">
+                        <span class="preset-title">Быстрые пресеты:</span>
+                        <div class="preset-tags">
+                            <button type="button" class="preset-tag" data-preset="frontend">💻 Стек Верстальщика</button>
+                            <button type="button" class="preset-tag" data-preset="python">🐍 Стек Python</button>
+                            <button type="button" class="preset-tag" data-preset="qa">🧪 Стек QA</button>
+                        </div>
+                    </div>
+
+                    <div class="items-list" id="skills-list">
+                        <!-- Список навыков рендерится динамически -->
+                    </div>
+                </section>
+
+                <!-- Вкладка 3: Проекты -->
+                <section class="tab-pane" id="tab-projects">
+                    <div class="form-section-header">
+                        <div class="flex-between">
+                            <div>
+                                <h2>Проекты и работы</h2>
+                                <p>Кейсы, лендинги, скрипты и пет-проекты</p>
+                            </div>
+                            <button type="button" class="btn btn-outline btn-sm" id="btn-add-project">+ Добавить проект</button>
+                        </div>
+                    </div>
+
+                    <div class="items-list" id="projects-list">
+                        <!-- Список проектов рендерится динамически -->
+                    </div>
+                </section>
+
+                <!-- Вкладка 4: Опыт и обучение -->
+                <section class="tab-pane" id="tab-experience">
+                    <div class="form-section-header">
+                        <div class="flex-between">
+                            <div>
+                                <h2>Опыт, курсы и практика</h2>
+                                <p>Этапы вашего профессионального развития</p>
+                            </div>
+                            <button type="button" class="btn btn-outline btn-sm" id="btn-add-exp">+ Добавить этап</button>
+                        </div>
+                    </div>
+
+                    <div class="items-list" id="experience-list">
+                        <!-- Список опыта рендерится динамически -->
+                    </div>
+                </section>
+
+                <!-- Вкладка 5: Контакты -->
+                <section class="tab-pane" id="tab-contacts">
+                    <div class="form-section-header">
+                        <h2>Контакты для работодателей</h2>
+                        <p>Куда HR и тимлиды могут написать вам в один клик</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-tg">Telegram (юзернейм)</label>
+                        <div class="input-with-prefix">
+                            <span class="input-prefix">@</span>
+                            <input type="text" id="input-tg" class="form-control" placeholder="username" value="username">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-gh">GitHub профиль / репозиторий</label>
+                        <input type="text" id="input-gh" class="form-control" placeholder="https://github.com/..." value="https://github.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-email">Email для связи</label>
+                        <input type="email" id="input-email" class="form-control" placeholder="developer@example.com" value="developer@example.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="input-wa">WhatsApp (телефон с кодом страны, опционально)</label>
+                        <input type="tel" id="input-wa" class="form-control" placeholder="+79001234567" value="">
+                    </div>
+                </section>
+            </div>
+        </aside>
+
+        <!-- Правая панель: Интерактивное Live-превью -->
+        <section class="preview-panel">
+            <div class="preview-toolbar">
+                <div class="device-toggles">
+                    <button class="device-btn active" data-device="desktop" title="Десктоп (100%)">
+                        <span>💻</span> Десктоп
+                    </button>
+                    <button class="device-btn" data-device="tablet" title="Планшет (768px)">
+                        <span>📱</span> Планшет
+                    </button>
+                    <button class="device-btn" data-device="mobile" title="Смартфон (375px)">
+                        <span>📱</span> Мобильный
+                    </button>
+                </div>
+
+                <div class="preview-actions">
+                    <button class="preview-action-btn" id="btn-toggle-preview-theme" title="Сменить тему в превью (Dark/Light)">
+                        <span id="preview-theme-icon">🌙</span> Тема
+                    </button>
+                    <button class="preview-action-btn" id="btn-fullscreen" title="Открыть во весь экран">
+                        <span>↗️</span> Во весь экран
+                    </button>
+                </div>
+            </div>
+
+            <!-- Контейнер с фреймом сайта -->
+            <div class="preview-stage" id="preview-stage">
+                <div class="preview-frame-wrapper" id="preview-wrapper">
+                    <iframe id="preview-iframe" src="template/index.html" frameborder="0"></iframe>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Модальное окно: ИИ-Ассистент (Gemini) -->
+    <div class="modal" id="modal-ai">
+        <div class="modal-backdrop"></div>
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <div class="modal-title-box">
+                    <span class="modal-icon">🤖</span>
+                    <h3>ИИ-Генератор продающего описания резюме</h3>
+                </div>
+                <button class="modal-close" id="modal-ai-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-desc">
+                    Нейросеть Gemini сформулирует сильный, профессиональный текст «Обо мне» и описание проектов, который выделит вас среди других кандидатов без опыта.
+                </p>
+
+                <div class="form-group">
+                    <label>Ваша ключевая цель / направление:</label>
+                    <select id="ai-target-role" class="form-control">
+                        <option value="frontend">💻 Junior Frontend-разработчик / Верстальщик (HTML/CSS/JS/Figma)</option>
+                        <option value="python">🐍 Junior Python-разработчик (Скрипты, парсеры, бэкенд)</option>
+                        <option value="qa">🧪 Junior QA / Тестировщик сайтов</option>
+                        <option value="fullstack">🌐 Веб-стажер (Frontend + базовый бэкенд)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Что вы уже умеете / изучили (кратко):</label>
+                    <input type="text" id="ai-user-skills" class="form-control" placeholder="Верстка лендингов, перенос из Figma, парсеры на Python, Git" value="Верстка сайтов по Figma, адаптив, базовый JS, парсеры на Python">
+                </div>
+
+                <button type="button" class="btn btn-primary btn-block" id="btn-run-ai">
+                    <span>✨ Сгенерировать профессиональный текст</span>
+                </button>
+
+                <div class="ai-result-box" id="ai-result-box" style="display: none;">
+                    <label>Результат генерации:</label>
+                    <textarea id="ai-result-text" class="form-control" rows="4"></textarea>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-apply-ai">
+                        <span>✅ Вставить в мое портфолио</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно: Инструкция по деплою на GitHub Pages -->
+    <div class="modal" id="modal-deploy">
+        <div class="modal-backdrop"></div>
+        <div class="modal-dialog modal-lg">
+            <div class="modal-header">
+                <div class="modal-title-box">
+                    <span class="modal-icon">🚀</span>
+                    <h3>Как бесплатно опубликовать сайт на GitHub Pages за 2 минуты</h3>
+                </div>
+                <button class="modal-close" id="modal-deploy-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="deploy-steps">
+                    <div class="deploy-step">
+                        <div class="step-num">1</div>
+                        <div class="step-content">
+                            <h4>Скачайте архив вашего сайта</h4>
+                            <p>Нажмите синюю кнопку <b>«Скачать ZIP-архив»</b> вверху страницы и распакуйте архив на компьютере.</p>
+                        </div>
+                    </div>
+
+                    <div class="deploy-step">
+                        <div class="step-num">2</div>
+                        <div class="step-content">
+                            <h4>Создайте репозиторий на GitHub</h4>
+                            <p>Перейдите на <a href="https://github.com/new" target="_blank" class="link-highlight">github.com/new</a>, введите название репозитория (например, <code>portfolio</code>) и выберите <b>Public</b>.</p>
+                        </div>
+                    </div>
+
+                    <div class="deploy-step">
+                        <div class="step-num">3</div>
+                        <div class="step-content">
+                            <h4>Загрузите файлы <code>index.html</code>, <code>style.css</code>, <code>script.js</code></h4>
+                            <p>Перетащите распакованные файлы в репозиторий на GitHub и нажмите <b>Commit changes</b>.</p>
+                        </div>
+                    </div>
+
+                    <div class="deploy-step">
+                        <div class="step-num">4</div>
+                        <div class="step-content">
+                            <h4>Включите GitHub Pages</h4>
+                            <p>В репозитории откройте <b>Settings</b> ➔ <b>Pages</b> ➔ в разделе <i>Branch</i> выберите <b>main / root</b> и нажмите <b>Save</b>.</p>
+                            <div class="deploy-url-example">
+                                🎉 Через 30 секунд ваш сайт будет доступен по ссылке: <br>
+                                <code>https://ваш-логин.github.io/portfolio/</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Уведомления Toasts -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

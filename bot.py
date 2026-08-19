@@ -277,12 +277,13 @@ def send_mini_app_message(message_id: int = None, chat_id: str = None):
         send_telegram_message(text, reply_markup=markup, chat_id=chat_id)
 
 def send_portfolio_builder_message(message_id: int = None, chat_id: str = None):
-    text = """🎨 <b>КОНСТРУКТОР САЙТА-ПОРТФОЛИО И РЕЗЮМЕ</b>
+    portfolio_url = f"{MINI_APP_HTTPS_URL.rstrip('/')}/portfolio/"
+    text = f"""🎨 <b>КОНСТРУКТОР САЙТА-ПОРТФОЛИО И РЕЗЮМЕ</b>
 
 Готовый личный сайт с вашими работами и проектами повышает шансы на приглашение на собеседование в <b>3–5 раз</b>!
 
-✨ <b>Конструктор запущен и доступен по адресу:</b>
-👉 <b>http://localhost:5174</b>
+✨ <b>Конструктор доступен онлайн 24/7:</b>
+👉 <b>{portfolio_url}</b>
 
 🚀 <b>Возможности веб-конструктора:</b>
 • <b>Live-превью:</b> редактируйте текст и проекты, сразу видя готовый сайт.
@@ -293,7 +294,7 @@ def send_portfolio_builder_message(message_id: int = None, chat_id: str = None):
 
     markup = {
         "inline_keyboard": [
-            [{"text": "🌐 Открыть конструктор (localhost:5174)", "url": "http://localhost:5174"}],
+            [{"text": "🎨 Открыть Конструктор Портфолио", "web_app": {"url": portfolio_url}}],
             [
                 {"text": "📥 Скачать Excel с вакансиями", "callback_data": "export_excel"},
                 {"text": "🔍 Найти 10 вакансий", "callback_data": "fetch_more"}

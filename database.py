@@ -429,6 +429,36 @@ def get_top_vacancies_today(limit: int = 5) -> List[dict]:
         """, (limit,))
         return [dict(row) for row in cursor.fetchall()]
 
+def get_top_matching_vacancies(stack_filter: str = 'all', salary_filter: str = 'salary_any', limit: int = 5) -> List[dict]:
+    """Возвращает актуальные вакансии из базы, удовлетворяющие фильтрам стека и зарплаты."""
+    from parser_hh import is_title_relevant
+    with get_connection() as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT vacancy_id as id, title, company, salary, url, source, published_at, status
+            FROM seen_vacancies
+            WHERE company NOT IN (SELECT company_name FROM blacklisted_companies)
+              AND vacancy_id NOT IN (SELECT vacancy_id FROM skipped_vacancies)
+            ORDER BY id DESC
+            LIMIT 150
+        """)
+        rows = cursor.fetchall()
+        
+    result = []
+    for r in rows:
+        vac = dict(r)
+        sal = vac.get('salary', '')
+        title = vac.get('title', '')
+        if not is_salary_matching(sal, salary_filter):
+            continue
+        if stack_filter != 'all' and not is_title_relevant(title, stack_filter):
+            continue
+        result.append(vac)
+        if len(result) >= limit:
+            break
+    return result
+
 def add_skipped_vacancy(vacancy_id: str) -> bool:
     """Добавляет вакансию в список пропущенных (отклоненных)."""
     with get_connection() as conn:

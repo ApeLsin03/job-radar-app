@@ -56,11 +56,60 @@ document.querySelectorAll('.nav-tab').forEach(btn => {
 
 let swipeVacancies = [];
 let currentCardIndex = 0;
+let currentStackFilter = 'all';
+let currentSalaryFilter = 'salary_any';
 const cardStack = document.getElementById('card-stack');
+
+function updateFilterPillsUI() {
+    document.querySelectorAll('.filter-pill').forEach(pill => {
+        const fType = pill.getAttribute('data-filter-type');
+        const fVal = pill.getAttribute('data-val');
+        if (fType === 'stack') {
+            pill.classList.toggle('active', fVal === currentStackFilter);
+        } else if (fType === 'salary') {
+            pill.classList.toggle('active', fVal === currentSalaryFilter);
+        }
+    });
+}
+
+async function setFilter(type, val) {
+    triggerHaptic('light');
+    if (type === 'stack') currentStackFilter = val;
+    if (type === 'salary') currentSalaryFilter = val;
+    updateFilterPillsUI();
+
+    try {
+        await fetch('/api/settings/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                filter_stack: currentStackFilter,
+                filter_salary: currentSalaryFilter
+            })
+        });
+    } catch (e) {}
+
+    const typeLabel = type === 'stack' ? 'Стек' : 'Зарплата';
+    showToast(`🎯 ${typeLabel} переключен!`);
+    await loadSwipeFeed();
+}
+
+async function loadSettings() {
+    try {
+        const resp = await fetch('/api/settings');
+        if (resp.ok) {
+            const data = await resp.json();
+            if (data.filter_stack) currentStackFilter = data.filter_stack;
+            if (data.filter_salary) currentSalaryFilter = data.filter_salary;
+            updateFilterPillsUI();
+        }
+    } catch (e) {}
+}
 
 async function loadSwipeFeed() {
     try {
-        const resp = await fetch('/api/feed');
+        const url = `/api/feed?stack=${currentStackFilter}&salary=${currentSalaryFilter}`;
+        const resp = await fetch(url);
         swipeVacancies = await resp.json();
         currentCardIndex = 0;
         renderCardStack();
@@ -666,6 +715,7 @@ document.getElementById('btn-refresh')?.addEventListener('click', () => {
 });
 
 // Инициализация при старте
-document.addEventListener('DOMContentLoaded', () => {
-    loadSwipeFeed();
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadSettings();
+    await loadSwipeFeed();
 });

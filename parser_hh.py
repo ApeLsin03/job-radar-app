@@ -143,94 +143,106 @@ def parse_habr_career(query: str, stack_filter: str = 'all', max_pages: int = 2)
             
     return vacancies
 
-def parse_hh_search(query: str, stack_filter: str = 'all', max_pages: int = 3) -> List[Dict]:
-    """Быстрый парсинг поисковой выдачи HeadHunter без блокирующих предзагрузок."""
+def parse_hh_search(query: str, stack_filter: str = 'all', salary_filter: str = 'salary_any', max_pages: int = 3) -> List[Dict]:
+    """Быстрый парсинг поисковой выдачи HeadHunter с поддержкой фильтрации по З/П и опыту."""
     vacancies = []
     
-    for page in range(max_pages):
-        url = f"https://hh.ru/search/vacancy?text={requests.utils.quote(query)}&schedule=remote&experience=noExperience&page={page}&order_by=publication_time"
-        try:
-            response = requests.get(url, headers=HEADERS, timeout=5)
-            if response.status_code != 200:
-                break
-                
-            soup = BeautifulSoup(response.text, 'lxml')
-            links = soup.find_all('a', attrs={'data-qa': re.compile(r'serp-item__title|vacancy-serp__vacancy-title')})
-            if not links:
-                break
-                
-            for link in links:
-                title = link.get_text(strip=True)
-                
-                if not is_title_relevant(title, stack_filter):
-                    continue
+    salary_param = ""
+    if salary_filter == 'salary_specified':
+        salary_param = "&only_with_salary=true"
+    elif salary_filter == 'salary_40k':
+        salary_param = "&only_with_salary=true&salary=40000"
+    elif salary_filter == 'salary_60k':
+        salary_param = "&only_with_salary=true&salary=60000"
+    
+    # Ищем как без опыта, так и джуниор-позиции (от 0 до 1-3 лет) с удаленкой
+    exp_variants = ['noExperience', 'between1And3']
+    
+    for exp in exp_variants:
+        for page in range(max_pages):
+            url = f"https://hh.ru/search/vacancy?text={requests.utils.quote(query)}&schedule=remote&experience={exp}{salary_param}&page={page}&order_by=publication_time"
+            try:
+                response = requests.get(url, headers=HEADERS, timeout=5)
+                if response.status_code != 200:
+                    break
                     
-                href = link.get('href', '')
-                id_match = re.search(r'/vacancy/(\d+)', href)
-                if not id_match:
-                    continue
+                soup = BeautifulSoup(response.text, 'lxml')
+                links = soup.find_all('a', attrs={'data-qa': re.compile(r'serp-item__title|vacancy-serp__vacancy-title')})
+                if not links:
+                    break
                     
-                raw_id = id_match.group(1)
-                vac_id = f"hh_{raw_id}"
-                clean_url = f"https://hh.ru/vacancy/{raw_id}"
-                
-                parent_card = link.find_parent('div', class_=re.compile(r'vacancy-card|serp-item')) or link.find_parent('div')
-                
-                company = "Компания не указана"
-                salary = "По договоренности (Стажировка / Обучение)"
-                
-                if parent_card:
-                    comp_tag = parent_card.find(attrs={'data-qa': re.compile(r'vacancy-serp__vacancy-employer')})
-                    if comp_tag:
-                        company = comp_tag.get_text(strip=True)
+                for link in links:
+                    title = link.get_text(strip=True)
+                    
+                    if not is_title_relevant(title, stack_filter):
+                        continue
                         
-                    sal_tag = parent_card.find(attrs={'data-qa': re.compile(r'vacancy-serp__vacancy-compensation|compensation-text')})
-                    if sal_tag:
-                        sal_text = sal_tag.get_text(strip=True)
-                        if sal_text and "не указана" not in sal_text.lower():
-                            salary = sal_text
+                    href = link.get('href', '')
+                    id_match = re.search(r'/vacancy/(\d+)', href)
+                    if not id_match:
+                        continue
+                        
+                    raw_id = id_match.group(1)
+                    vac_id = f"hh_{raw_id}"
+                    clean_url = f"https://hh.ru/vacancy/{raw_id}"
+                    
+                    parent_card = link.find_parent('div', class_=re.compile(r'vacancy-card|serp-item')) or link.find_parent('div')
+                    
+                    company = "Компания не указана"
+                    salary = "По договоренности (Стажировка / Обучение)"
+                    
+                    if parent_card:
+                        comp_tag = parent_card.find(attrs={'data-qa': re.compile(r'vacancy-serp__vacancy-employer')})
+                        if comp_tag:
+                            company = comp_tag.get_text(strip=True)
+                            
+                        sal_tag = parent_card.find(attrs={'data-qa': re.compile(r'vacancy-serp__vacancy-compensation|compensation-text')})
+                        if sal_tag:
+                            sal_text = sal_tag.get_text(strip=True)
+                            if sal_text and "не указана" not in sal_text.lower():
+                                salary = sal_text
+                    
+                    vacancies.append({
+                        'id': vac_id,
+                        'title': title,
+                        'company': company,
+                        'salary': salary,
+                        'url': clean_url,
+                        'requirements': '', # Загружается точечно только для отправляемых 10 вакансий!
+                        'responsibilities': "Участие в проектах под руководством наставника",
+                        'experience': "Без опыта / Junior (100% удаленно)",
+                        'source': 'HeadHunter',
+                        'published_at': datetime.now().isoformat()
+                    })
+            except Exception:
+                break
                 
-                vacancies.append({
-                    'id': vac_id,
-                    'title': title,
-                    'company': company,
-                    'salary': salary,
-                    'url': clean_url,
-                    'requirements': '', # Загружается точечно только для отправляемых 10 вакансий!
-                    'responsibilities': "Участие в проектах под руководством наставника",
-                    'experience': "Без опыта (100% удаленно)",
-                    'source': 'HeadHunter',
-                    'published_at': datetime.now().isoformat()
-                })
-        except Exception:
-            break
-            
     return vacancies
 
-def get_all_fresh_vacancies(stack_filter: str = 'all', keywords: Optional[List[str]] = None) -> List[Dict]:
+def get_all_fresh_vacancies(stack_filter: str = 'all', salary_filter: str = 'salary_any', keywords: Optional[List[str]] = None) -> List[Dict]:
     """Быстрый параллельный сбор вакансий со всех источников за 1-2 секунды."""
     if not keywords:
         if stack_filter == 'frontend':
-            keywords = ['верстальщик', 'junior frontend', 'веб-разработчик', 'лендинг', 'junior html', 'tilda', 'figma']
+            keywords = ['верстальщик', 'junior frontend', 'веб-разработчик', 'лендинг', 'junior html', 'tilda', 'figma', 'react', 'вебмастер']
         elif stack_filter == 'python':
-            keywords = ['junior python', 'стажер python', 'скрипты python', 'django', 'fastapi']
+            keywords = ['junior python', 'стажер python', 'скрипты python', 'django', 'fastapi', 'разработчик python']
         elif stack_filter == 'qa':
-            keywords = ['junior qa', 'тестировщик', 'стажер qa', 'тестирование сайтов']
+            keywords = ['junior qa', 'тестировщик', 'стажер qa', 'тестирование сайтов', 'ручной тестировщик']
         else:
             keywords = [
                 'верстальщик', 'стажер', 'стажировка', 'веб-разработчик', 
                 'junior frontend', 'junior python', 'junior QA',
-                'разметка данных', 'помощник программиста', 'tilda'
+                'разметка данных', 'помощник программиста', 'tilda', 'html верстка'
             ]
         
     all_found = {}
     
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=10) as executor:
         futures = []
         for kw in keywords[:4]:
             futures.append(executor.submit(parse_habr_career, kw.strip(), stack_filter, 2))
         for kw in keywords:
-            futures.append(executor.submit(parse_hh_search, kw.strip(), stack_filter, 3))
+            futures.append(executor.submit(parse_hh_search, kw.strip(), stack_filter, salary_filter, 2))
             
         for f in as_completed(futures):
             try:
@@ -244,5 +256,5 @@ def get_all_fresh_vacancies(stack_filter: str = 'all', keywords: Optional[List[s
 if __name__ == '__main__':
     import time
     t0 = time.time()
-    res = get_all_fresh_vacancies()
-    print(f"Собрано {len(res)} вакансий за {time.time() - t0:.2f} сек!")
+    res = get_all_fresh_vacancies(stack_filter='all', salary_filter='salary_40k')
+    print(f"Собрано {len(res)} вакансий от 40k+ за {time.time() - t0:.2f} сек!")

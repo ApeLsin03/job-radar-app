@@ -94,7 +94,7 @@ def run_single_scan(limit: int = BATCH_LIMIT, verbose: bool = True) -> int:
         all_raw_vacancies = []
 
         try:
-            hh_habr_items = get_hh_and_habr(stack_filter=active_filter)
+            hh_habr_items = get_hh_and_habr(stack_filter=active_filter, salary_filter=active_salary)
             all_raw_vacancies.extend(hh_habr_items)
             if verbose:
                 print(f"[{now_str}] 📦 HeadHunter + Хабр: {len(hh_habr_items)} предложений")
@@ -140,7 +140,7 @@ def run_single_scan(limit: int = BATCH_LIMIT, verbose: bool = True) -> int:
                     print(f"💵 {v.get('salary')} | 📍 {v.get('experience')}")
                     print(f"🔗 {v.get('url')}")
                     
-                    send_vacancy_card(v, disable_notification=is_night)
+                    send_vacancy_card(v, disable_notification=is_night, chat_id=chat_id)
                     
                     if token and chat_id:
                         time.sleep(1.0)
@@ -152,10 +152,24 @@ def run_single_scan(limit: int = BATCH_LIMIT, verbose: bool = True) -> int:
         if new_count > 0 and token and chat_id:
             send_batch_footer(new_count, active_filter=active_filter, active_salary=active_salary)
         elif new_count == 0 and token and chat_id and verbose:
-            send_telegram_message(
-                f"🔎 <i>Новых вакансий по вашим фильтрам (Стек: {active_filter}, З/П: {active_salary}) за этот цикл не появилось. Все найденные предложения сохранены в базе и Excel! Следующая автопроверка через {cur_int_str}.</i>",
-                disable_notification=is_night
-            )
+            from database import get_top_matching_vacancies
+            matching_vacs = get_top_matching_vacancies(active_filter, active_salary, limit=5)
+            if matching_vacs:
+                send_telegram_message(
+                    f"✨ <b>В базе найдено {len(matching_vacs)} подходящих вакансий по фильтрам (Стек: {active_filter}, З/П: {active_salary}):</b>",
+                    chat_id=chat_id,
+                    disable_notification=is_night
+                )
+                for vac in matching_vacs:
+                    send_vacancy_card(vac, disable_notification=is_night, chat_id=chat_id)
+                    time.sleep(0.8)
+                send_batch_footer(len(matching_vacs), active_filter=active_filter, active_salary=active_salary)
+            else:
+                send_telegram_message(
+                    f"🔎 <i>Новых вакансий по вашим фильтрам (Стек: {active_filter}, З/П: {active_salary}) за этот цикл не появилось. Все найденные предложения сохранены в базе и Excel! Следующая автопроверка через {cur_int_str}.</i>",
+                    disable_notification=is_night,
+                    chat_id=chat_id
+                )
             
         return new_count
 
