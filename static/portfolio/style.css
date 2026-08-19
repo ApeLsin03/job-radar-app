@@ -797,11 +797,104 @@ body {
 }
 
 /* ==========================================================================
-   RESPONSIVE
+   RESPONSIVE & MOBILE ADAPTATIONS
    ========================================================================== */
 
 @media (max-width: 1024px) {
     .builder-container {
-        grid-template-columns: 400px 1fr;
+        grid-template-columns: 380px 1fr;
+    }
+}
+
+@media (max-width: 860px) {
+    body {
+        height: auto;
+        min-height: 100dvh;
+        overflow-y: auto;
+    }
+
+    .topbar {
+        height: auto;
+        min-height: 56px;
+        padding: 10px 14px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .topbar-actions {
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 6px;
+        scrollbar-width: none;
+        justify-content: flex-start;
+    }
+
+    .topbar-actions::-webkit-scrollbar {
+        display: none;
+    }
+
+    .builder-container {
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        overflow: visible;
+    }
+
+    .editor-panel {
+        width: 100%;
+        max-height: none;
+        overflow: visible;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .editor-tabs {
+        overflow-x: auto;
+        scrollbar-width: none;
+        padding: 0 10px;
+    }
+
+    .editor-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .editor-tab-btn {
+        padding: 12px 14px;
+        font-size: 0.82rem;
+        flex-shrink: 0;
+    }
+
+    .tab-content {
+        padding: 16px 14px;
+    }
+
+    .preview-panel {
+        width: 100%;
+        min-height: 520px;
+        height: 75vh;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .preview-toolbar {
+        padding: 10px 14px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .preview-stage {
+        padding: 12px;
+    }
+
+    .preview-frame-wrapper {
+        width: 100% !important;
+        max-width: 100%;
+        border-radius: 12px;
+    }
+
+    .modal-dialog {
+        width: 94%;
+        margin: 16px auto;
+        padding: 18px 16px;
     }
 }

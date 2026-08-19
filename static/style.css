@@ -1385,3 +1385,118 @@ body {
     font-weight: 700;
     cursor: pointer;
 }
+
+/* ==========================================================================
+   MOBILE RESPONSIVE & SAFE AREA ADAPTATIONS
+   ========================================================================== */
+
+@media (max-width: 480px) {
+    html, body {
+        height: 100dvh;
+        height: 100vh;
+    }
+
+    .app-header {
+        height: 52px;
+        padding: 0 12px;
+    }
+
+    .header-name {
+        font-size: 0.88rem;
+    }
+
+    .swipe-container {
+        padding: 4px 10px 8px;
+    }
+
+    .feed-status-bar {
+        margin-bottom: 4px;
+    }
+
+    .card-stack-viewport {
+        margin-bottom: 6px;
+    }
+
+    .swipe-card {
+        padding: 14px 14px 12px;
+        border-radius: 18px;
+    }
+
+    .card-title {
+        font-size: 1.05rem;
+        line-height: 1.25;
+    }
+
+    .card-salary-badge {
+        font-size: 0.82rem;
+        padding: 4px 10px;
+    }
+
+    .card-company-name {
+        font-size: 0.82rem;
+    }
+
+    .card-desc-box {
+        font-size: 0.78rem;
+        max-height: 120px;
+    }
+
+    .btn-direct-link {
+        padding: 9px 12px;
+        font-size: 0.8rem;
+    }
+
+    .swipe-controls-bar {
+        gap: 8px;
+        padding: 2px 4px;
+    }
+
+    .ctrl-btn {
+        height: 48px;
+        border-radius: 14px;
+    }
+
+    .ctrl-btn .btn-icon {
+        font-size: 1.15rem;
+    }
+
+    .ctrl-btn .btn-lbl {
+        font-size: 0.65rem;
+    }
+
+    .bottom-nav-bar {
+        height: calc(56px + env(safe-area-inset-bottom, 0px));
+        padding-bottom: env(safe-area-inset-bottom, 4px);
+    }
+
+    .nav-tab .tab-icon {
+        font-size: 1.15rem;
+    }
+
+    .nav-tab .tab-label {
+        font-size: 0.65rem;
+    }
+
+    .kanban-screen-wrapper {
+        padding: 10px 10px 80px;
+    }
+
+    .k-column {
+        min-width: 82vw;
+        max-width: 85vw;
+        scroll-snap-align: center;
+    }
+
+    .analytics-kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .kpi-metric-card {
+        padding: 12px 10px;
+    }
+
+    .kpi-val {
+        font-size: 1.15rem;
+    }
+}
