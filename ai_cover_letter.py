@@ -51,9 +51,7 @@ def extract_key_skills(text: str) -> list:
     return skills
 
 def generate_cover_letter_with_ai(vacancy: dict, api_key: str) -> str:
-    """Генерирует высококонверсионное сопроводительное письмо через Google Gemini Interactions API."""
-    url = f"https://generativelanguage.googleapis.com/v1beta/interactions?key={api_key}"
-    
+    """Генерирует высококонверсионное сопроводительное письмо через Google Gemini API."""
     title = vacancy.get('title', 'стажер / начинающий специалист')
     company = vacancy.get('company', 'вашей компании')
     req = vacancy.get('requirements', '')
@@ -63,11 +61,11 @@ def generate_cover_letter_with_ai(vacancy: dict, api_key: str) -> str:
 
 Требования работодателя: {req}
 Кандидат: {CANDIDATE_NAME} (21 год). 
-Навыки: создание сайтов и лендингов (HTML/CSS/JS), скрипты и парсеры на Python, работа с макетами Figma, опыт в SEO/аналитике данных (Wildberries), высокая концентрация и быстрая обучаемость.
+Навыки: создание сайтов и лендингов (HTML5/CSS3/JavaScript), скрипты и парсеры на Python, работа с макетами Figma, опыт в SEO/аналитике данных (Wildberries), высокая концентрация и быстрая обучаемость.
 
 ПРАВИЛА И СТРУКТУРА ПИСЬМА:
 1. НИКАКИХ заезженных фраз ("Я внимательно ознакомился", "Прошу рассмотреть мое резюме", "Имею честь").
-2. 1-й абзац (Крючок): Сразу назови вакансию и объясни, почему ты готов закрывать именно эти задачи (верстка сайтов, лендинги, скрипты на Python, работа с контентом/данными).
+2. 1-й абзац (Крючок): Сразу назови вакансию и объясни, почему готов закрывать именно эти задачи (верстка сайтов, лендинги, скрипты на Python, работа с контентом/данными).
 3. 2-й абзац (Польза для компании): Покажи, что умеешь аккуратно работать по ТЗ, писать чистый код, внимателен к деталям и готов разгрузить команду от рутины под руководством наставника.
 4. 3-й абзац (Призыв к действию): Предложи выполнить практическое тестовое задание и созвониться на 10-15 минут.
 5. Заверши письмо подписью:
@@ -75,21 +73,24 @@ def generate_cover_letter_with_ai(vacancy: dict, api_key: str) -> str:
 6. Объем: ровно 3 коротких абзаца + подпись. Тон: уверенный, профессиональный, без лишней воды.
 """
 
-    for model_name in ['gemini-3.7-flash', 'gemini-3.5-flash', 'gemini-2.5-pro']:
+    models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro']
+    for model_name in models:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
         payload = {
-            "model": model_name,
-            "input": prompt
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"temperature": 0.7, "maxOutputTokens": 600}
         }
         try:
-            response = requests.post(url, json=payload, timeout=12)
+            response = requests.post(url, json=payload, timeout=8)
             if response.status_code == 200:
                 data = response.json()
-                outputs = data.get('outputs', [])
-                if outputs:
-                    last_out = outputs[-1]
-                    text = last_out.get('text') or last_out.get('content') or ''
-                    if text and len(text.strip()) > 50:
-                        return text.strip()
+                candidates = data.get('candidates', [])
+                if candidates:
+                    parts = candidates[0].get('content', {}).get('parts', [])
+                    if parts and 'text' in parts[0]:
+                        text = parts[0]['text'].strip()
+                        if len(text) > 50:
+                            return text
         except Exception:
             continue
             

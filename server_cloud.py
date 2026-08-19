@@ -76,7 +76,82 @@ def get_swipe_feed(limit=50, stack_filter=None, salary_filter=None):
         })
     return feed
 
-def generate_ai_bio_with_gemini(role: str, skills: str) -> str:
+def get_kanban_data():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT v.vacancy_id, v.title, v.company, v.salary, v.url, v.source, v.status
+        FROM seen_vacancies v
+        WHERE v.status IN ('applied', 'test_task', 'interview', 'offer', 'rejected')
+        ORDER BY v.id DESC
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+
+    kanban = {
+        'applied': [],
+        'test_task': [],
+        'interview': [],
+        'offer': [],
+        'rejected': []
+    }
+    for r in rows:
+        st = r['status']
+        if st in kanban:
+            kanban[st].append({
+                'vacancy_id': r['vacancy_id'],
+                'title': r['title'],
+                'company': r['company'],
+                'salary': r['salary'] or 'З/П не указана',
+                'url': r['url'],
+                'source': r['source'] or 'HeadHunter'
+            })
+    return kanban
+
+def generate_custom_letter(vacancy_id: str, tone: str = 'business') -> str:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM seen_vacancies WHERE vacancy_id = ?", (vacancy_id,))
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        vac_dict = {
+            'title': 'Junior Frontend / Python разработчик',
+            'company': 'вашей компании',
+            'requirements': 'Адаптивная верстка, HTML5/CSS3, JavaScript, скрипты на Python, работа с Figma',
+            'url': ''
+        }
+    else:
+        vac_dict = {
+            'title': row['title'],
+            'company': row['company'],
+            'requirements': f"{row['title']} в компании {row['company']}. 100% удаленка, верстка по Figma, скрипты на Python.",
+            'url': row['url']
+        }
+
+    if tone == 'short':
+        return (
+            f"Здравствуйте!\n\n"
+            f"Откликаюсь на вакансию «{vac_dict['title']}» в компании {vac_dict['company']}.\n"
+            f"Имею практические навыки адаптивной верстки (HTML5/CSS3, JavaScript, перенос из Figma пиксель в пиксель) и опыт разработки автоматизированных скриптов на Python. "
+            f"Внимателен к деталям, быстро вникаю в процессы и нацелен на результат.\n\n"
+            f"Готов оперативно выполнить тестовое задание и приступить к работе!\n\n"
+            f"С уважением, Алексей Юпатов\n"
+            f"Telegram: @ApeLsinn03 | Тел: +7 923 162 9223"
+        )
+    elif tone == 'wb_analytics':
+        return (
+            f"Добрый день!\n\n"
+            f"Меня заинтересовала вакансия «{vac_dict['title']}» в компании {vac_dict['company']}.\n"
+            f"Помимо навыков фронтенд-разработки и скриптов на Python, имею крепкий бэкграунд в аналитике данных, SEO-оптимизации и работе с цифровыми витринами (Wildberries). "
+            f"Умею анализировать требования, структурировать информацию и находить узкие места.\n\n"
+            f"Буду рад применить аналитический подход и технические навыки в вашей команде. Готов к тестовому заданию!\n\n"
+            f"С уважением, Алексей Юпатов\n"
+            f"Telegram: @ApeLsinn03 | Тел: +7 923 162 9223"
+        )
+    else:
+        return ai_cover_letter.get_cover_letter(vac_dict)
     """Генерирует продающее описание для портфолио через Google Gemini API."""
     if not GEMINI_API_KEY:
         return "Специализируюсь на адаптивной верстке сайтов по макетам Figma и разработке скриптов на Python. Пишу чистый семантичный код на HTML5/CSS3/JavaScript. Нацелен на результат, соблюдаю дедлайны и готов быстро расти в сильной команде."
