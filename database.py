@@ -164,7 +164,6 @@ def is_vacancy_seen(vacancy_id: str, company: str = '', title: str = '') -> bool
         return True
         
     clean_id = str(vacancy_id).strip()
-    fp = generate_fingerprint(company, title) if (company and title) else None
     
     with get_connection() as conn:
         cursor = conn.cursor()

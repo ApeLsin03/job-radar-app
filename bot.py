@@ -608,7 +608,7 @@ def send_evening_digest_message(stats: dict, top_vacancies: list):
 
     send_telegram_message(text, reply_markup={"inline_keyboard": keyboard})
 
-def send_favorites_list(favorites: list, message_id: int = None):
+def send_favorites_list(favorites: list, message_id: int = None, chat_id: str = None):
     if not favorites:
         text = "⭐ <b>Ваш список избранного пуст.</b>\n\nНажимайте кнопку <b>«⭐ В избранное»</b> под интересными вакансиями, чтобы сохранять их сюда!"
         markup = {
@@ -618,9 +618,9 @@ def send_favorites_list(favorites: list, message_id: int = None):
             ]
         }
         if message_id:
-            edit_telegram_message(message_id, text, markup)
+            edit_telegram_message(message_id, text, markup, chat_id=chat_id)
         else:
-            send_telegram_message(text, reply_markup=markup)
+            send_telegram_message(text, reply_markup=markup, chat_id=chat_id)
         return
         
     text = f"⭐ <b>Ваши сохраненные вакансии ({len(favorites)} шт.):</b>\n\n"
@@ -644,6 +644,6 @@ def send_favorites_list(favorites: list, message_id: int = None):
     keyboard.append([{"text": "◀️ Главное меню", "callback_data": "menu_main"}])
     
     if message_id:
-        edit_telegram_message(message_id, text, {"inline_keyboard": keyboard})
+        edit_telegram_message(message_id, text, {"inline_keyboard": keyboard}, chat_id=chat_id)
     else:
-        send_telegram_message(text, reply_markup={"inline_keyboard": keyboard})
+        send_telegram_message(text, reply_markup={"inline_keyboard": keyboard}, chat_id=chat_id)

@@ -152,6 +152,8 @@ def generate_custom_letter(vacancy_id: str, tone: str = 'business') -> str:
         )
     else:
         return ai_cover_letter.get_cover_letter(vac_dict)
+
+def generate_ai_bio_with_gemini(role: str, skills: str) -> str:
     """Генерирует продающее описание для портфолио через Google Gemini API."""
     if not GEMINI_API_KEY:
         return "Специализируюсь на адаптивной верстке сайтов по макетам Figma и разработке скриптов на Python. Пишу чистый семантичный код на HTML5/CSS3/JavaScript. Нацелен на результат, соблюдаю дедлайны и готов быстро расти в сильной команде."
@@ -339,7 +341,10 @@ class CloudAppHandler(http.server.SimpleHTTPRequestHandler):
             self.send_json({'status': 'ok'})
             return
 
-        super().do_POST()
+        self.send_response(404)
+        self.send_header('Content-type', 'application/json')
+        self.end_headers()
+        self.wfile.write(json.dumps({'error': 'Not Found'}).encode('utf-8'))
 
     def end_headers(self):
         self.send_header('Access-Control-Allow-Origin', '*')
