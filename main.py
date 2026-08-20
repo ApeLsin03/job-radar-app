@@ -15,7 +15,7 @@ if sys.platform == 'win32':
 
 from database import (
     init_db, is_vacancy_seen, save_vacancy, get_stats, get_vacancy_by_id,
-    add_favorite_by_id, remove_favorite_by_id, get_favorites,
+    add_favorite_by_id, remove_favorite_by_id, get_favorites, get_skipped_vacancies,
     get_user_filter, set_user_filter, get_salary_filter, set_salary_filter,
     is_salary_matching, get_setting, set_setting, is_night_mode_enabled,
     is_daily_digest_enabled, get_top_vacancies_today,
@@ -31,7 +31,7 @@ from bot import (
     send_telegram_document, send_filters_menu, send_salary_menu,
     send_modes_menu, send_interval_menu, format_interval_text,
     send_status_picker, send_applications_tracker, send_blacklist_menu,
-    format_status_icon, send_evening_digest_message, send_favorites_list,
+    format_status_icon, send_evening_digest_message, send_favorites_list, send_skipped_list,
     send_market_analytics_message, send_portfolio_builder_message,
     send_mini_app_message,
     edit_telegram_message, edit_telegram_reply_markup,
@@ -231,11 +231,14 @@ def get_main_menu_data():
             [{"text": "🔍 Найти 10 свежих вакансий", "callback_data": "fetch_more"}],
             [
                 {"text": "⭐ Мое избранное", "callback_data": "view_favorites"},
-                {"text": "📌 Мои отклики", "callback_data": "menu_tracker"}
+                {"text": "🚫 Пропущенные", "callback_data": "view_skipped"}
             ],
             [
-                {"text": "🎨 Мой сайт-портфолио", "callback_data": "menu_portfolio"},
-                {"text": "📊 Аналитика рынка", "callback_data": "menu_market"}
+                {"text": "📊 Мои отклики", "callback_data": "menu_tracker"},
+                {"text": "📈 Аналитика рынка", "callback_data": "menu_market"}
+            ],
+            [
+                {"text": "📄 Мой сайт-портфолио", "callback_data": "menu_portfolio"}
             ],
             [
                 {"text": "📥 Скачать Excel", "callback_data": "export_excel"},
@@ -476,6 +479,10 @@ def telegram_polling_worker():
                             ans()
                             send_favorites_list(get_favorites(), message_id=msg_id, chat_id=cb_chat_id)
                             
+                        elif data_val == 'view_skipped':
+                            ans()
+                            send_skipped_list(get_skipped_vacancies(), message_id=msg_id, chat_id=cb_chat_id)
+                            
                         # --- МЕНЮ СТЕКА ---
                         elif data_val == 'menu_filters':
                             ans()
@@ -595,8 +602,11 @@ def telegram_polling_worker():
                         elif text in ['/blacklist', '/bl', 'чс', 'черный список']:
                             send_blacklist_menu(get_blacklisted_companies())
                             
-                        elif text in ['/fav', '/favorites', 'избранное', 'мои вакансии']:
-                            send_favorites_list(get_favorites())
+                        elif text in ['/fav', '/favorites', 'избранное', 'мое избранное']:
+                            send_favorites_list(get_favorites(), chat_id=user_chat_id)
+                            
+                        elif text in ['/skip', '/skipped', 'пропущено', 'пропущенные']:
+                            send_skipped_list(get_skipped_vacancies(), chat_id=user_chat_id)
                             
                         elif text in ['/filter', '/filters', 'фильтр', 'стек']:
                             send_filters_menu(get_user_filter())

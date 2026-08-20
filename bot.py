@@ -647,3 +647,40 @@ def send_favorites_list(favorites: list, message_id: int = None, chat_id: str = 
         edit_telegram_message(message_id, text, {"inline_keyboard": keyboard}, chat_id=chat_id)
     else:
         send_telegram_message(text, reply_markup={"inline_keyboard": keyboard}, chat_id=chat_id)
+
+def send_skipped_list(skipped: list, message_id: int = None, chat_id: str = None):
+    if not skipped:
+        text = "🚫 <b>Список пропущенных вакансий пуст.</b>\n\nВы еще не отклонили ни одной вакансии."
+        markup = {
+            "inline_keyboard": [
+                [{"text": "◀️ Главное меню", "callback_data": "menu_main"}]
+            ]
+        }
+        if message_id:
+            edit_telegram_message(message_id, text, markup, chat_id=chat_id)
+        else:
+            send_telegram_message(text, reply_markup=markup, chat_id=chat_id)
+        return
+        
+    text = f"🚫 <b>Последние пропущенные вакансии:</b>\n\n"
+    keyboard = []
+    
+    for idx, v in enumerate(skipped[:10], 1):
+        vac_id = v.get('vacancy_id', '')
+        title = escape_html(v.get('title', 'Без названия'))
+        company = escape_html(v.get('company', 'Компания'))
+        url = v.get('url', 'https://hh.ru')
+        
+        text += f"<b>{idx}. {title}</b>\n🏢 {company}\n🔗 <a href='{url}'>Открыть</a>\n\n"
+        
+        keyboard.append([
+            {"text": f"🔙 Вернуть #{idx}", "callback_data": f"restore_card_{vac_id}"}
+        ])
+        
+    keyboard.append([{"text": "◀️ Главное меню", "callback_data": "menu_main"}])
+    
+    if message_id:
+        edit_telegram_message(message_id, text, {"inline_keyboard": keyboard}, chat_id=chat_id)
+    else:
+        send_telegram_message(text, reply_markup={"inline_keyboard": keyboard}, chat_id=chat_id)
+

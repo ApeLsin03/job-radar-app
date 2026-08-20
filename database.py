@@ -472,8 +472,22 @@ def get_skipped_vacancies_count() -> int:
         res = cursor.fetchone()
         return res[0] if res else 0
 
+def get_skipped_vacancies() -> list:
+    """Возвращает список пропущенных вакансий (ограничено до 10-15 для Telegram)."""
+    with get_connection() as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT v.vacancy_id, v.title, v.company, v.salary, v.url
+            FROM skipped_vacancies s
+            JOIN seen_vacancies v ON s.vacancy_id = v.vacancy_id
+            ORDER BY s.created_at DESC
+            LIMIT 15
+        ''')
+        return [dict(row) for row in cursor.fetchall()]
+
 def reset_skipped_vacancies() -> int:
-    """Очищает историю пропущенных вакансий для повторного просмотра."""
+    """Очищает список пропущенных вакансий и возвращает количество удаленных."""
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("DELETE FROM skipped_vacancies")
