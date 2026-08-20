@@ -17,6 +17,7 @@ from ai_cover_letter import get_cover_letter
 load_dotenv()
 
 HTTP_SESSION = requests.Session()
+from database import get_interval_minutes
 
 def get_bot_credentials():
     token = os.getenv('TELEGRAM_BOT_TOKEN', '8863351782:AAEeLRftLdK_dw-OxtuZtmo9zfwAqd5MeZo').strip()

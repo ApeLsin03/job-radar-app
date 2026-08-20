@@ -172,11 +172,6 @@ def is_vacancy_seen(vacancy_id: str, company: str = '', title: str = '') -> bool
         if cursor.fetchone() is not None:
             return True
             
-        if fp:
-            cursor.execute('SELECT 1 FROM seen_vacancies WHERE fingerprint = ?', (fp,))
-            if cursor.fetchone() is not None:
-                return True
-                
         return False
 
 def save_vacancy(vacancy: dict) -> bool:
