@@ -309,29 +309,29 @@ function initDragEvents(card, vac) {
     window.addEventListener('mouseup', onEnd);
 }
 
-async function executeSwipe(direction, card, vac) {
+function executeSwipe(direction, card, vac) {
     card.classList.remove('glow-like', 'glow-nope', 'glow-bl');
 
     if (direction === 'right') {
         triggerHaptic('success');
         card.style.transform = 'translate3d(600px, 80px, 0) rotateZ(32deg)';
         card.style.opacity = '0';
-        showToast(`💚 Сохранено в Избранное!`);
-        await fetch('/api/swipe', {
+        showToast(`⭐ Отправлено в Избранное!`);
+        fetch('/api/swipe', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ vacancy_id: vac.vacancy_id, action: 'favorite' })
-        });
+        }).catch(e => console.error(e));
     } else if (direction === 'left') {
         triggerHaptic('light');
         card.style.transform = 'translate3d(-600px, 80px, 0) rotateZ(-32deg)';
         card.style.opacity = '0';
         showToast(`Пропущено`);
-        await fetch('/api/swipe', {
+        fetch('/api/swipe', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ vacancy_id: vac.vacancy_id, action: 'skip' })
-        });
+        }).catch(e => console.error(e));
     } else if (direction === 'up') {
         triggerHaptic('error');
         card.style.transform = 'translate3d(0, -650px, 0) rotateX(30deg)';
