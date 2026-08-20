@@ -150,23 +150,33 @@ def run_single_scan(limit: int = BATCH_LIMIT, verbose: bool = True) -> int:
         
         cur_int_str = format_interval_text(get_interval_minutes())
         if new_count > 0 and token and chat_id:
-            send_batch_footer(new_count, active_filter=active_filter, active_salary=active_salary)
+            send_batch_footer(new_count, active_filter=active_filter, active_salary=active_salary, chat_id=chat_id)
         elif new_count == 0 and token and chat_id and verbose:
             from database import get_top_matching_vacancies
             matching_vacs = get_top_matching_vacancies(active_filter, active_salary, limit=5)
             if matching_vacs:
-                send_telegram_message(
-                    f"✨ <b>В базе найдено {len(matching_vacs)} подходящих вакансий по фильтрам (Стек: {active_filter}, З/П: {active_salary}):</b>",
-                    chat_id=chat_id,
-                    disable_notification=is_night
+                text = (
+                    f"🔎 <b>Новых вакансий прямо сейчас на сайтах не появилось</b> (все свежие уже собраны в вашей базе).\n\n"
+                    f"📚 В базе сохранено <b>{len(matching_vacs)}</b> подходящих вакансий по вашим фильтрам:\n"
+                    f"• Стек: <b>{active_filter}</b>\n"
+                    f"• Зарплата: <b>{active_salary}</b>\n\n"
+                    f"Хотите выдать их прямо сейчас в чат?"
                 )
-                for vac in matching_vacs:
-                    send_vacancy_card(vac, disable_notification=is_night, chat_id=chat_id)
-                    time.sleep(0.8)
-                send_batch_footer(len(matching_vacs), active_filter=active_filter, active_salary=active_salary)
+                markup = {
+                    "inline_keyboard": [
+                        [{"text": f"📤 Выдать {len(matching_vacs)} вакансий из базы", "callback_data": "show_db_vacancies"}],
+                        [{"text": "🚀 Открыть в Radar Mini App", "web_app": {"url": MINI_APP_HTTPS_URL}}],
+                        [
+                            {"text": "🎯 Сменить стек", "callback_data": "menu_filters"},
+                            {"text": "💵 Фильтр З/П", "callback_data": "menu_salary"}
+                        ],
+                        [{"text": "🏠 Главное меню", "callback_data": "menu_main"}]
+                    ]
+                }
+                send_telegram_message(text, reply_markup=markup, chat_id=chat_id)
             else:
                 send_telegram_message(
-                    f"🔎 <i>Новых вакансий по вашим фильтрам (Стек: {active_filter}, З/П: {active_salary}) за этот цикл не появилось. Все найденные предложения сохранены в базе и Excel! Следующая автопроверка через {cur_int_str}.</i>",
+                    f"🔎 <i>Новых вакансий по вашим фильтрам (Стек: {active_filter}, З/П: {active_salary}) за этот цикл не появилось. Все найденные предложения сохранены в базе! Следующая фоновая автопроверка через {cur_int_str}.</i>",
                     disable_notification=is_night,
                     chat_id=chat_id
                 )
@@ -310,6 +320,24 @@ def telegram_polling_worker():
                             ans("Ищу следующие 10 вакансий...")
                             send_telegram_message("⏳ <b>Ищу следующую порцию из 10 свежих вакансий...</b>", chat_id=cb_chat_id)
                             threading.Thread(target=run_single_scan, args=(BATCH_LIMIT, True), daemon=True).start()
+
+                        elif data_val == 'show_db_vacancies':
+                            ans("Выдаю 5 вакансий из базы...")
+                            active_filter = get_user_filter()
+                            active_salary = get_salary_filter()
+                            from database import get_top_matching_vacancies
+                            matching_vacs = get_top_matching_vacancies(active_filter, active_salary, limit=5)
+                            if matching_vacs:
+                                send_telegram_message(
+                                    f"✨ <b>Выдаю 5 подходящих вакансий из базы:</b>",
+                                    chat_id=cb_chat_id
+                                )
+                                for vac in matching_vacs:
+                                    send_vacancy_card(vac, disable_notification=False, chat_id=cb_chat_id)
+                                    time.sleep(0.8)
+                                send_batch_footer(len(matching_vacs), active_filter=active_filter, active_salary=active_salary, chat_id=cb_chat_id)
+                            else:
+                                send_telegram_message("В базе пока нет вакансий по этим критериям. Попробуйте сменить фильтр стека.", chat_id=cb_chat_id)
                             
                         # --- EXCEL ---
                         elif data_val == 'export_excel':
@@ -624,26 +652,26 @@ def main_loop():
     print("   Нажмите Ctrl+C для остановки.\n")
 
     last_scan_time = time.time()
-    run_single_scan(limit=BATCH_LIMIT, verbose=True)
+    run_single_scan(limit=BATCH_LIMIT, verbose=False)
 
     while True:
         try:
             check_daily_digest_trigger()
             
             interval_min = get_interval_minutes()
-            interval_sec = max(60, interval_min * 60)
+            interval_sec = max(1800, interval_min * 60)
             
             if time.time() - last_scan_time >= interval_sec:
-                run_single_scan(limit=BATCH_LIMIT, verbose=True)
+                run_single_scan(limit=BATCH_LIMIT, verbose=False)
                 last_scan_time = time.time()
                 
-            time.sleep(10)
+            time.sleep(15)
         except KeyboardInterrupt:
             print("\n🛑 Мониторинг остановлен пользователем.")
             break
         except Exception as e:
             print(f"\n❌ Ошибка цикла: {e}")
-            time.sleep(10)
+            time.sleep(15)
 
 if __name__ == '__main__':
     main_loop()

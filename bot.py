@@ -130,8 +130,8 @@ def format_status_icon(status: str) -> str:
     }
     return icons.get(status, f"📌 {status}")
 
-def send_vacancy_card(vacancy: dict, disable_notification: bool = False) -> bool:
-    vac_id = vacancy.get('id', '')
+def send_vacancy_card(vacancy: dict, disable_notification: bool = False, chat_id: str = None) -> bool:
+    vac_id = vacancy.get('id') or vacancy.get('vacancy_id', '')
     title = escape_html(vacancy.get('title', 'Без названия'))
     company = escape_html(vacancy.get('company', 'Компания не указана'))
     salary = escape_html(vacancy.get('salary', 'З/п не указана'))
@@ -145,7 +145,7 @@ def send_vacancy_card(vacancy: dict, disable_notification: bool = False) -> bool
     cover_letter = get_cover_letter(vacancy)
     cover_letter_escaped = escape_html(cover_letter)
     
-    message = f"""🔥 <b>НОВАЯ ВАКАНСИЯ БЕЗ ОПЫТА</b> [{source}]
+    message = f"""🔥 <b>ВАКАНСИЯ БЕЗ ОПЫТА</b> [{source}]
 
 💼 <b>Должность:</b> {title}
 🏢 <b>Компания:</b> {company}
@@ -172,10 +172,10 @@ def send_vacancy_card(vacancy: dict, disable_notification: bool = False) -> bool
         ]
     }
     
-    res = send_telegram_message(message, reply_markup=reply_markup, disable_notification=disable_notification)
+    res = send_telegram_message(message, reply_markup=reply_markup, disable_notification=disable_notification, chat_id=chat_id)
     return bool(res)
 
-def send_batch_footer(sent_count: int, active_filter: str = "all", active_salary: str = "salary_any"):
+def send_batch_footer(sent_count: int, active_filter: str = "all", active_salary: str = "salary_any", chat_id: str = None):
     filter_names = {
         'all': '🌐 Все',
         'frontend': '💻 Frontend/Верстка',
@@ -184,40 +184,38 @@ def send_batch_footer(sent_count: int, active_filter: str = "all", active_salary
     }
     salary_names = {
         'salary_any': 'Любая',
-        'salary_specified': 'С точной суммой',
+        'salary_specified': 'Только с точной суммой',
         'salary_40k': 'От 40 тыс. ₽',
         'salary_60k': 'От 60 тыс. ₽'
     }
-    cur_f = filter_names.get(active_filter, '🌐 Все')
-    cur_s = salary_names.get(active_salary, 'Любая')
+    f_title = filter_names.get(active_filter, active_filter)
+    s_title = salary_names.get(active_salary, active_salary)
+    cur_int_str = format_interval_text(get_interval_minutes())
 
-    text = f"""📊 <b>Подборка из {sent_count} вакансий сформирована!</b>
-🎯 Стек: <b>{cur_f}</b> | 💵 З/П: <b>{cur_s}</b>
-⏳ Следующий автоматический поиск запустится по расписанию.
+    text = f"""📊 <b>ИТОГИ ПОДБОРКИ:</b>
+• Выдано вакансий: <b>{sent_count}</b>
+• Активный стек: <b>{f_title}</b>
+• Фильтр З/П: <b>{s_title}</b>
+• Следующая автопроверка через: <b>{cur_int_str}</b>
 
-Выберите действие ниже 👇"""
+<i>Нажмите кнопку ниже для поиска следующей порции или смены фильтров:</i>"""
 
     markup = {
         "inline_keyboard": [
+            [{"text": "🚀 Открыть Radar Mini App", "web_app": {"url": MINI_APP_HTTPS_URL}}],
+            [{"text": "🔍 Найти еще 10 свежих вакансий", "callback_data": "fetch_more"}],
             [
-                {"text": "🚀 Открыть Radar Mini App", "web_app": {"url": "http://localhost:5175"}},
-                {"text": "🔍 Найти 10 вакансий", "callback_data": "fetch_more"}
-            ],
-            [
-                {"text": "⭐ Мое избранное", "callback_data": "view_favorites"},
+                {"text": "⭐ Избранное", "callback_data": "view_favorites"},
                 {"text": "📌 Мои отклики", "callback_data": "menu_tracker"}
             ],
             [
-                {"text": "🎨 Мой сайт-портфолио", "callback_data": "menu_portfolio"},
-                {"text": "📊 Аналитика рынка", "callback_data": "menu_market"}
+                {"text": "🎯 Сменить стек", "callback_data": "menu_filters"},
+                {"text": "💵 Фильтр З/П", "callback_data": "menu_salary"}
             ],
-            [
-                {"text": "💵 Фильтр З/П", "callback_data": "menu_salary"},
-                {"text": "⚙️ Настройки и Режимы", "callback_data": "menu_modes"}
-            ]
+            [{"text": "🏠 Главное меню", "callback_data": "menu_main"}]
         ]
     }
-    send_telegram_message(text, reply_markup=markup)
+    send_telegram_message(text, reply_markup=markup, chat_id=chat_id)
 
 MINI_APP_HTTPS_URL = os.getenv('RENDER_EXTERNAL_URL', 'https://job-radar-app.onrender.com')
 
